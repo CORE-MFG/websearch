@@ -11,8 +11,24 @@ from websearch.logging import *
 class WebScraper:
     """
     Industry-standard web content scraper using trafilatura for clean text extraction.
-    Trafilatura is specifically designed for extracting main content from web pages,
-    filtering out navigation, ads, and boilerplate content.
+    
+    This class provides methods to fetch and extract clean textual content from URLs
+    typically returned by a search engine. It leverages `trafilatura` to remove
+    boilerplate HTML and isolate meaningful content.
+
+    Attributes:
+        timeout (int): Maximum time (in seconds) to wait for a response.
+        max_content_length (int): Upper limit on how much content (in characters) to process.
+        session (requests.Session): Persistent HTTP session for efficient connections.
+        logger: Configured logger instance.
+
+    Example:
+        ```python
+        from websearch.scraper import WebScraper
+
+        with WebScraper(timeout=5) as scraper:
+            enriched = scraper.fetch_multiple(search_results)
+        ```
     """
     
     def __init__(self, 
@@ -21,13 +37,14 @@ class WebScraper:
                  logger_level: str = "INFO",
                  logger_enabled: bool = True,
         ):
-        
         """
-        Initialize the web scraper with configuration.
-        
+        Initialize the WebScraper with configuration parameters.
+
         Args:
-            timeout: Request timeout in seconds
-            max_content_length: Maximum content length to process (prevents memory issues)
+            timeout (int): Request timeout in seconds.
+            max_content_length (int): Maximum size of content (in bytes) to fetch per page.
+            logger_level (str): Logging level ("DEBUG", "INFO", etc.).
+            logger_enabled (bool): Whether logging is active.
         """
         self.timeout = timeout
         self.max_content_length = max_content_length
@@ -43,13 +60,14 @@ class WebScraper:
     
     def fetch_content(self, search_result: SearchResult) -> SearchResult:
         """
-        Fetch and extract clean text content from a URL.
-        
+        Fetch and extract cleaned textual content from a single URL in a SearchResult.
+
         Args:
-            search_result: The search result to scrape
-            
+            search_result (SearchResult): A single search result object containing a URL.
+
         Returns:
-            Clean text content or None if extraction failed
+            SearchResult: A new SearchResult with extracted content in the `content` field.
+                          If extraction fails, the original SearchResult is returned unmodified.
         """
 
         try:
@@ -134,13 +152,14 @@ class WebScraper:
     
     def fetch_multiple(self, search_results: SearchResults) -> SearchResults:
         """
-        Fetch content from multiple URLs.
-        
+        Fetch content from multiple SearchResult objects and return enriched results.
+
         Args:
-            urls: List of URLs to scrape
-            
+            search_results (SearchResults): A collection of search results to process.
+
         Returns:
-            A new copy of the SearchResults object with the content fetched from the URLs
+            SearchResults: A new SearchResults object with each entry enriched
+                           with extracted content if successful.
         """
         self.logger.info(
             format_for_log(
@@ -155,29 +174,28 @@ class WebScraper:
         return new_results
     
     def close(self):
-        """Close the session to free resources."""
+        """
+        Release the HTTP session and free associated resources.
+        Recommended when not using the context manager interface.
+        """        
         self.session.close()
     
     def __enter__(self):
-        """Context manager entry."""
+        """
+        Enable context manager usage of WebScraper.
+
+        Returns:
+            WebScraper: The current instance.
+        """
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit - ensures session is closed."""
+        """
+        Ensures the HTTP session is closed when exiting a context manager block.
+
+        Args:
+            exc_type: Exception type (if raised).
+            exc_val: Exception value (if raised).
+            exc_tb: Traceback object (if raised).
+        """
         self.close()
-
-
-# Convenience function for simple use cases
-# def extract_web_content(url: str, timeout: int = 10) -> Optional[str]:
-#     """
-#     Simple function to extract content from a single URL.
-    
-#     Args:
-#         url: The URL to scrape
-#         timeout: Request timeout in seconds
-        
-#     Returns:
-#         Clean text content or None if extraction failed
-#     """
-#     with WebScraper(timeout=timeout) as scraper:
-#         return scraper.fetch_content(url) 

@@ -23,13 +23,21 @@ class Backends(str, Enum):
 
 class WebSearch:
     """
-    WebSearch class for searching the web.
+    A high-level web search utility using DuckDuckGo Search (DDGS) under the hood,
+    optionally enriched with scraped page content via `WebScraper`.
 
-    Args:
-        api_key: API key for the search engine
-        fetch_content: Whether to fetch content from the search results
-        max_results: Maximum number of results to return
-        safesearch: Safesearch mode
+    This class supports both synchronous and asynchronous invocation styles,
+    making it suitable for a range of environments (e.g., CLI tools, web apps, agents).
+
+    Class Attributes:
+        api_key (str): Optional API key for future extension or authenticated engines.
+        fetch_content (bool): If True, will scrape the content of each result URL.
+        max_results (int): Default number of results to return if not explicitly specified.
+        safesearch (str): Safe search filter. One of: "off", "moderate", "strict".
+        backend (Backends): The default search backend to use (e.g., google, bing).
+
+    Usage Example:
+        results = WebSearch.invoke("latest robotics startups", fetch_content=True)
     """
 
     api_key: str = None
@@ -39,6 +47,13 @@ class WebSearch:
     backend: Backends = Backends.GOOGLE
 
     def __init__(self, log_level: str = "INFO", log_enabled: bool = False):
+        """
+        Initialize a WebSearch instance with logging preferences.
+
+        Args:
+            log_level (str): Logging level (e.g., "DEBUG", "INFO").
+            log_enabled (bool): Whether to enable internal logging.
+        """
         self.logger = LoggerFactory.create_logger(
             "WebSearch",
             log_level,
@@ -53,7 +68,19 @@ class WebSearch:
                        safesearch: str = None, 
                        backend: Backends = None
         ) -> SearchResults:
-        """Internal async logic shared by both interfaces."""
+        """
+        Internal async method that performs the core search logic.
+
+        Args:
+            query (str): The search query string.
+            max_results (int): Override the default number of results to fetch.
+            fetch_content (bool): If True, scrape web pages for full content.
+            safesearch (str): Safe search mode for content filtering.
+            backend (Backends): The search engine backend to use.
+
+        Returns:
+            SearchResults: A list of structured search results with optional full content.
+        """
         max_results = max_results or self.max_results
         fetch_content = fetch_content or self.fetch_content
         safesearch = safesearch or self.safesearch
@@ -108,7 +135,21 @@ class WebSearch:
             log_level: str = None, 
             log_enabled: bool = None
         ) -> SearchResults:
-        """Sync interface for blocking codebases."""
+        """
+        Synchronous interface to perform a blocking web search.
+
+        Args:
+            query (str): The search query.
+            max_results (int): Max number of results (overrides class default).
+            fetch_content (bool): Whether to scrape each result’s page.
+            safesearch (str): Safesearch filtering level.
+            backend (Backends): Search backend to use.
+            log_level (str): Optional log level override.
+            log_enabled (bool): Optional logging toggle.
+
+        Returns:
+            SearchResults: Structured, optionally enriched search results.
+        """
         instance = cls(log_level, log_enabled)
         return asyncio.run(instance._ainvoke(query, max_results, fetch_content, safesearch, backend))
 
@@ -122,6 +163,20 @@ class WebSearch:
             log_level: str = None, 
             log_enabled: bool = None
         ) -> SearchResults:
-        """Async interface for async codebases."""
+        """
+        Asynchronous interface to perform a non-blocking web search.
+
+        Args:
+            query (str): The search query.
+            max_results (int): Max number of results (overrides class default).
+            fetch_content (bool): Whether to scrape each result’s page.
+            safesearch (str): Safesearch filtering level.
+            backend (Backends): Search backend to use.
+            log_level (str): Optional log level override.
+            log_enabled (bool): Optional logging toggle.
+
+        Returns:
+            SearchResults: Structured, optionally enriched search results.
+        """
         instance = cls(log_level, log_enabled)
         return await instance._ainvoke(query, max_results, fetch_content, safesearch, backend)
