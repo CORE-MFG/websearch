@@ -45,6 +45,7 @@ class WebSearch:
     max_results: int = 5
     safesearch: str = "moderate"
     backend: Backends = Backends.GOOGLE
+    fetch_content_max_chars: int = 10000
 
     def __init__(self, log_level: str = "INFO", log_enabled: bool = False):
         """
@@ -65,6 +66,7 @@ class WebSearch:
                        query: str, 
                        max_results: int = None, 
                        fetch_content: bool = None, 
+                       fetch_content_max_chars: int = None,
                        safesearch: str = None, 
                        backend: Backends = None
         ) -> SearchResults:
@@ -75,6 +77,7 @@ class WebSearch:
             query (str): The search query string.
             max_results (int): Override the default number of results to fetch.
             fetch_content (bool): If True, scrape web pages for full content.
+            fetch_content_max_chars (int): Maximum number of characters to fetch from each result.
             safesearch (str): Safe search mode for content filtering.
             backend (Backends): The search engine backend to use.
 
@@ -83,11 +86,12 @@ class WebSearch:
         """
         max_results = max_results or self.max_results
         fetch_content = fetch_content or self.fetch_content
+        fetch_content_max_chars = fetch_content_max_chars or self.fetch_content_max_chars
         safesearch = safesearch or self.safesearch
         backend = backend or self.backend
 
         self.logger.info(f"Searching for '{query}' on {backend}")
-        self.logger.info(f"Config: max results = {max_results}, fetch content = {fetch_content}, safesearch = '{safesearch}'")
+        self.logger.info(f"Config: max results = {max_results}, fetch content = {fetch_content}, w max chars = {fetch_content_max_chars}, safesearch = '{safesearch}'")
 
         async with httpx.AsyncClient() as client:
             # Get search results
@@ -119,7 +123,7 @@ class WebSearch:
                 # Fetch content from each URL
                 self.logger.info("Scraping content for search results...")
                 with WebScraper() as scraper:
-                    search_results = scraper.fetch_multiple(search_results)
+                    search_results = scraper.fetch_multiple(search_results, max_content_length=fetch_content_max_chars)
 
                 self.logger.debug(format_for_log("WebScraper Results", search_results.model_dump()))
 
@@ -130,6 +134,7 @@ class WebSearch:
             query: str, 
             max_results: int = None, 
             fetch_content: bool = None, 
+            fetch_content_max_chars: int = None,
             safesearch: str = None, 
             backend: Backends = None, 
             log_level: str = None, 
@@ -142,6 +147,7 @@ class WebSearch:
             query (str): The search query.
             max_results (int): Max number of results (overrides class default).
             fetch_content (bool): Whether to scrape each result’s page.
+            fetch_content_max_chars (int): Maximum number of characters to fetch from each result.
             safesearch (str): Safesearch filtering level.
             backend (Backends): Search backend to use.
             log_level (str): Optional log level override.
@@ -151,17 +157,18 @@ class WebSearch:
             SearchResults: Structured, optionally enriched search results.
         """
         instance = cls(log_level, log_enabled)
-        return asyncio.run(instance._ainvoke(query, max_results, fetch_content, safesearch, backend))
+        return asyncio.run(instance._ainvoke(query, max_results, fetch_content, fetch_content_max_chars, safesearch, backend))
 
     @classmethod
     async def ainvoke(cls, 
             query: str, 
             max_results: int = None, 
-            fetch_content: bool = None, 
+            fetch_content: bool = None,
+            fetch_content_max_chars: int = None,
             safesearch: str = None, 
             backend: Backends = None,
-            log_level: str = None, 
-            log_enabled: bool = None
+            log_level: str = "INFO", 
+            log_enabled: bool = False
         ) -> SearchResults:
         """
         Asynchronous interface to perform a non-blocking web search.
@@ -170,6 +177,7 @@ class WebSearch:
             query (str): The search query.
             max_results (int): Max number of results (overrides class default).
             fetch_content (bool): Whether to scrape each result’s page.
+            fetch_content_max_chars (int): Maximum number of characters to fetch from each result.
             safesearch (str): Safesearch filtering level.
             backend (Backends): Search backend to use.
             log_level (str): Optional log level override.
@@ -179,4 +187,4 @@ class WebSearch:
             SearchResults: Structured, optionally enriched search results.
         """
         instance = cls(log_level, log_enabled)
-        return await instance._ainvoke(query, max_results, fetch_content, safesearch, backend)
+        return await instance._ainvoke(query, max_results, fetch_content, fetch_content_max_chars, safesearch, backend)

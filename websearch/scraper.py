@@ -33,7 +33,7 @@ class WebScraper:
     
     def __init__(self, 
                  timeout: int = 10, 
-                 max_content_length: int = 5000000,
+                 max_content_length: int = 10000,
                  logger_level: str = "INFO",
                  logger_enabled: bool = True,
         ):
@@ -57,19 +57,20 @@ class WebScraper:
 
         self.logger = LoggerFactory.create_logger("WebScraper", logger_level, logger_enabled, "development")
 
-    
-    def fetch_content(self, search_result: SearchResult) -> SearchResult:
+        
+    def fetch_content(self, search_result: SearchResult, max_content_length: int = None) -> SearchResult:
         """
         Fetch and extract cleaned textual content from a single URL in a SearchResult.
 
         Args:
             search_result (SearchResult): A single search result object containing a URL.
+            max_content_length (int): Maximum number of characters to fetch from each result.
 
         Returns:
             SearchResult: A new SearchResult with extracted content in the `content` field.
                           If extraction fails, the original SearchResult is returned unmodified.
         """
-
+        max_content_length = max_content_length or self.max_content_length
         try:
             url = search_result.url.encoded_string()
             self.logger.info(f"Scraping content from: {url}")
@@ -106,8 +107,8 @@ class WebScraper:
             for chunk in response.iter_content(chunk_size=8192, decode_unicode=True):
                 if chunk:
                     size += len(chunk)
-                    if size > self.max_content_length:
-                        self.logger.warning(f"Content too large for {url}, truncating at {self.max_content_length} chars")
+                    if size > max_content_length:
+                        self.logger.warning(f"Content too large for {url}, truncating at {max_content_length} chars")
                         break
                     content += chunk
             
@@ -150,13 +151,13 @@ class WebScraper:
             self.logger.error(f"Unexpected error while processing {url}: {str(e)}")
             return search_result
     
-    def fetch_multiple(self, search_results: SearchResults) -> SearchResults:
+    def fetch_multiple(self, search_results: SearchResults, max_content_length: int = None) -> SearchResults:
         """
         Fetch content from multiple SearchResult objects and return enriched results.
 
         Args:
             search_results (SearchResults): A collection of search results to process.
-
+            max_content_length (int): Maximum number of characters to fetch from each result.
         Returns:
             SearchResults: A new SearchResults object with each entry enriched
                            with extracted content if successful.
@@ -170,7 +171,7 @@ class WebScraper:
 
         new_results = search_results.model_copy(update={"data": []})
         for search_result in search_results.data:
-            new_results.data.append(self.fetch_content(search_result))
+            new_results.data.append(self.fetch_content(search_result, max_content_length))
         return new_results
     
     def close(self):
