@@ -1,6 +1,11 @@
-# Local
-from .schema import *
-from .scraper import *
-from .websearch import *
+from .schema import SearchResults, SearchResult
+from .scraper import WebScraper
+from .websearch import WebSearch
+from .tools import websearch, async_websearch
 
-__all__ = ["WebSearch", "Backends", "WebScraper", "SearchResults", "SearchResult"]
+__all__ = [
+    "WebSearch", 
+    "WebScraper", 
+    "SearchResults", "SearchResult",
+    "websearch", "async_websearch"
+]
