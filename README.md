@@ -10,6 +10,10 @@ You can install this package directly from GitHub using pip:
 pip install git+https://github.com/core-mfg/websearch.git
 ```
 
+```bash
+uv add git+https://github.com/core-mfg/websearch.git
+```
+
 Or clone the repo and install in editable mode for development:
 
 ```bash
