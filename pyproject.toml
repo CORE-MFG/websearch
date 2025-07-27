@@ -1,0 +1,61 @@
+[project]
+name = "websearch"
+version = "0.1.0"
+description = "A customized websearch package using DuckDuckGo Search as a framework for free web-searches."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ddgs>=9.4.3",
+    "httpx>=0.28.1",
+    "langchain-core>=0.3.72",
+    "pydantic>=2.11.7",
+    "requests>=2.32.4",
+    "rich>=14.1.0",
+    "trafilatura>=2.0.0",
+]
+authors = [
+    { name="Alex Buchanan", email="alex@coremfg.io" }
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "pytest", 
+    "isort>=6.0.1",
+]
+
+[tool.hatch.build]
+include = [
+  "mywebsearch/**.py"
+]
+
+
+[tool.isort]
+length_sort = false
+combine_as_imports = true
+extend_skip = [".md", ".json"]
+multi_line_output = 8
+lines_between_sections = 0
+
+sections = [
+    "FUTURE", 
+    "STDLIB", 
+    "THIRDPARTY", 
+    "FIRSTPARTY", 
+    "LOCALFOLDER"
+]
+
+import_heading_stdlib = "Standard Library"
+extra_standard_library = ["requests"]
+
+import_heading_thirdparty = "Third Party"
+
+import_heading_localfolder = "Local"
+#known_local = []
+
+import_heading_firstparty = "Core"
+src_paths = ["websearch"]
+
