@@ -101,15 +101,10 @@ class WebScraper:
                 self.logger.warning(f"Non-HTML content type for {url}: {content_type}")
                 return search_result
             
-            # Get content with size limit
+            # Fetch all content first
             content = ""
-            size = 0
             for chunk in response.iter_content(chunk_size=8192, decode_unicode=True):
                 if chunk:
-                    size += len(chunk)
-                    if size > max_content_length:
-                        self.logger.warning(f"Content too large for {url}, truncating at {max_content_length} chars")
-                        break
                     content += chunk
             
             # Extract clean text using trafilatura
@@ -120,6 +115,11 @@ class WebScraper:
                 include_formatting=False,
                 output_format='txt'
             )
+            
+            # Truncate extracted text if it exceeds max length
+            if extracted_text and len(extracted_text) > max_content_length:
+                self.logger.warning(f"Extracted content too large for {url}, truncating at {max_content_length} chars")
+                extracted_text = extracted_text[:max_content_length]
 
             self.logger.debug(format_for_log(f"Extracted {len(extracted_text)} chars from {url}", extracted_text[:300] + "..."))
             
