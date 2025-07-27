@@ -29,7 +29,7 @@ dev = [
 
 [tool.hatch.build]
 include = [
-  "mywebsearch/**.py"
+  "websearch/**.py"
 ]
 
 
